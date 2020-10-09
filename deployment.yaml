@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: my-app
+  name: my-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      serviceAccountName: my-app
+      initContainers:
+      - name: create-secret
+        image: bitnami/kubectl:1.19
+        command:
+        - /app/run.sh
+        volumeMounts:
+        - name: app
+          mountPath: /app
+      containers:
+      - image: busybox
+        name: busybox
+        command:
+        - /bin/sh
+        - -c
+        - "while true; do echo $PASS; sleep 1; done"
+        envFrom:
+        - secretRef:
+            name: my-app
+      volumes:
+      - name: app
+        configMap:
+          name: my-app
+          defaultMode: 0555
